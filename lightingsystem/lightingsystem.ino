@@ -24,13 +24,6 @@ void setup() {
   // Open the data connection
   Serial.begin(115200);
 
-  // Determine initial values;
-  long darkFreq = getFrequency();
-  int initTemp = getTemperature();
-
-  // write initial data
-  writeData(darkFreq, initTemp);
-
   // Activate the lamp, go in loop
   digitalWrite(RELAY_PIN, HIGH);
 }
