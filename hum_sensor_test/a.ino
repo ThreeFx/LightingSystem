@@ -18,7 +18,7 @@
 void setup() {
   Wire.begin();
   Serial.begin(115200);
-  Serial.println("Test started");
+  Serial.println("Temperature,Humidity");
 }
 
 
