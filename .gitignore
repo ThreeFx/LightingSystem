@@ -2,3 +2,9 @@
 *.swp
 
 log*
+
+*.pyc
+
+hum_sensor_test/serialcomm*
+colorsystem/serialcomm*
+lightingsystem/serialcomm*
