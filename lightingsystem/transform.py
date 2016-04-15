@@ -22,15 +22,28 @@ ser = serial.Serial(
 
 currentdate = getdatefilename()
 
-rawdata = open('log-{}-raw.csv'.format(currentdate), 'w')
+rawdata = open('rawlog-{}.csv'.format(currentdate), 'w')
 f = open('log-{}.csv'.format(currentdate), 'w')
 
-# Configuration of the light sensor
-configuration = readinp(ser)
-# The first set of data reveals the initial conditions
-# No light, "complete" darkness
-intialdata = readnums(ser)
-writenumsto(rawdata, initialdata)
+prev3 = readnums();
+prev2 = readnums();
+prev = readnums();
+
+map(lambda x: writenumsto(rawdata, x), [prev3, prev2, prev])
+
+# Compare the data to the data 3 minutes prior
+# If there is no significant frequency change in
+# the light, the led junction has warmed up
+while True:
+    data = readnums(ser)
+    writenumsto(rawdata, data)
+
+    if abs(prev3[0] - data[0]) < 100: # in Hz
+        break;
+
+    prev = data
+    prev2 = prev
+    prev3 = prev2
 
 while True:
     data = readnums(ser)
@@ -39,4 +52,3 @@ while True:
     writenumsto(f, data)
     rawdata.flush()
     f.flush()
-
