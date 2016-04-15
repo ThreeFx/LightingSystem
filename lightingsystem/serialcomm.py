@@ -1,1 +1,1 @@
-lib/serialcomm.py
+../lib/serialcomm.py
