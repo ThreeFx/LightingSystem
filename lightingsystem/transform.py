@@ -1,6 +1,4 @@
-import datetime, serial, sys
-
-sys.path.append('../')
+import datetime, serial
 
 from serialcomm import *
 
@@ -22,7 +20,7 @@ ser = serial.Serial(
         port = 'COM5',\
         baudrate = 115200)
 
-currentdate = datetime.datetime.utcnow().replace(" ", "-")
+currentdate = getdatefilename()
 
 rawdata = open('log-{}-raw.csv'.format(currentdate), 'w')
 f = open('log-{}.csv'.format(currentdate), 'w')

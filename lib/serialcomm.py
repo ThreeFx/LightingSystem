@@ -1,3 +1,5 @@
+import datetime
+
 sepchar = ','
 
 def readinp(conn):
@@ -6,8 +8,11 @@ def readinp(conn):
 def readnums(conn):
     return map(float, readinp(conn))
 
-def writeto(file, data):
-    return (sepchar.join(data) + '\n')
+def writeto(f, data):
+    return f.write(sepchar.join(data) + '\n')
 
-def writenumsto(file, data):
-    return writeto(file, map(str, data))
+def writenumsto(f, data):
+    return writeto(f, map(str, data))
+
+def getdatefilename():
+    return str(datetime.datetime.utcnow()).replace(" ", "-").replace(":", "-").replace(".", "-")
