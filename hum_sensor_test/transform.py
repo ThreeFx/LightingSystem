@@ -1,4 +1,4 @@
-import datetime, serial
+import datetime, serial, sys
 
 from serialcomm import *
 
@@ -6,13 +6,9 @@ ser = serial.Serial(
 	port = '/dev/ttyACM0',\
 	baudrate = 115200)
 
-currentdate = str(datetime.datetime.utcnow()).replace(" ", "-")
+currentdate = getdatefilename()
 
 f = open('log-{}.csv'.format(currentdate), 'w')
-
-# Configuration of the light sensor
-configuration = readinp(ser)
-f.write(','.join(configuration) + '\n')
 
 while True:
 	data = readnums(ser)
