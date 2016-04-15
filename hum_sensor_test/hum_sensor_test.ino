@@ -18,7 +18,7 @@
 void setup() {
   Wire.begin();
   Serial.begin(115200);
-  Serial.println("Temperature,Humidity");
+  //Serial.println("Temperature,Humidity");
 }
 
 
@@ -44,5 +44,5 @@ void loop() {
 
   Serial.print(temp); Serial.write(','); Serial.println(hum);
 
-  delay(5000);
+  delay(1000);
 }
