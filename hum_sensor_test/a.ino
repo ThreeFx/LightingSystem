@@ -1,10 +1,10 @@
-/*************************************************** 
+/***************************************************
   This is an example for the HTU21D-F Humidity & Temp Sensor
 
   Designed specifically to work with the HTU21D-F sensor from Adafruit
   ----> https://www.adafruit.com/products/1899
 
-  These displays use I2C to communicate, 2 pins are required to  
+  These displays use I2C to communicate, 2 pins are required to
   interface
  ****************************************************/
 
@@ -42,7 +42,7 @@ void loop() {
   lower = Wire.read();
   float hum = ((uint16_t)(upper << 8) | lower) * 125.0 / 65536 - 6;
 
-  Serial.print(temp); Serial.write(';'); Serial.println(hum);
-  
+  Serial.print(temp); Serial.write(','); Serial.println(hum);
+
   delay(5000);
 }

@@ -4,7 +4,7 @@
 /* Digital pins */
 const int FREQ_PIN = 2;
 
-/* 
+/*
  *  Temperature sensor address
  *  Device is 0x90 >> 1 == 0x48
  */
@@ -17,17 +17,17 @@ void setup() {
   // Initialise the pins
   pinMode(FREQ_PIN, INPUT);
   pinMode(RELAY_PIN, OUTPUT);
-  
+
   // Init the I2C bus
   Wire.begin();
-  
+
   // Open the data connection
   Serial.begin(115200);
-  
+
   // Determine initial values;
-  long darkFreq = getFrequency();  
+  long darkFreq = getFrequency();
   int initTemp = getTemperature();
-  
+
   // write initial data
   writeData(darkFreq, initTemp);
 
@@ -68,7 +68,7 @@ void readBytesFromSensor(byte* upper, byte* lower) {
   Wire.requestFrom(TEMP_ADDR, 2);
   *upper = Wire.read();
   *lower = Wire.read();
-  
+
 #ifdef DEBUG
   Serial.println(*upper);
   Serial.println(*lower);
@@ -77,7 +77,7 @@ void readBytesFromSensor(byte* upper, byte* lower) {
 
 void writeData(long frequency, int temperature) {
   Serial.print(frequency);
-  Serial.write(';');
+  Serial.write(',');
   Serial.println(temperature);
 }
 

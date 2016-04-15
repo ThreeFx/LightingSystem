@@ -11,7 +11,7 @@ const int FREQ_S2_PIN = 2;
 const int FREQ_S3_PIN = 3;
 const int FREQ_PIN = 4;
 
-/* 
+/*
  *  Stores the configuration for the sensor in the form
  *  <S2 bit> <S3 bit>
  *  as a short integer.
@@ -107,7 +107,7 @@ void readBytesFromSensor(byte* upper, byte* lower) {
   Wire.requestFrom(TEMP_ADDR, 2);
   *upper = Wire.read();
   *lower = Wire.read();
-  
+
 #ifdef DEBUG
   Serial.println(*upper);
   Serial.println(*lower);
@@ -116,11 +116,10 @@ void readBytesFromSensor(byte* upper, byte* lower) {
 
 void writeData(long freq_r, long freq_g, long freq_b, int temperature) {
   Serial.print(freq_r);
-  Serial.write(';');
+  Serial.write(',');
   Serial.print(freq_g);
-  Serial.write(';');
+  Serial.write(',');
   Serial.print(freq_b);
-  Serial.write(';');
+  Serial.write(',');
   Serial.println(temperature);
 }
-
