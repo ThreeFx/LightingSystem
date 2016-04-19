@@ -1,8 +1,13 @@
-import datetime, serial
+import datetime, os, serial, sys
+
+configurelimit = 3
+sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 from serialcomm import *
 
-def getLightFromFrequency(data, initdata):
+def getLightFromFrequency(data, init):
+    return data[0]
+
     frequency = data[0]
     darkfrequency = initdata[0]
     temp = data[1]
@@ -16,39 +21,73 @@ def getLightFromFrequency(data, initdata):
 
 # --------- Main begins here ----------- #
 
+sys.stdout.write("Beginning setup ... ")
+
+if not os.path.exists(os.path.abspath('./logs')):
+    os.makedirs(os.path.abspath('./logs'))
+
+if not os.path.exists(os.path.abspath('./rawlogs')):
+    os.makedirs(os.path.abspath('./rawlogs'))
+
 ser = serial.Serial(
-        port = 'COM5',\
+        port = '/dev/ttyACM0',\
         baudrate = 115200)
 
 currentdate = getdatefilename()
 
-rawdata = open('rawlog-{}.csv'.format(currentdate), 'w')
-f = open('log-{}.csv'.format(currentdate), 'w')
+rawdata = open('rawlogs/rawlog-{}.csv'.format(currentdate), 'w')
+f = open('logs/log-{}.csv'.format(currentdate), 'w')
 
-prev3 = readnums();
-prev2 = readnums();
-prev = readnums();
+print("done")
+sys.stdout.write("Acquiring initial data ... ")
 
-map(lambda x: writenumsto(rawdata, x), [prev3, prev2, prev])
+init = readnums(ser)
+print("done")
+
+print("configurelimit is set to {}".format(configurelimit))
+sys.stdout.write("Acquiring initial reference data ... ")
+prevdata = [init]
+for x in xrange(0, configurelimit):
+    prevdata.append(readnums(ser))
+print("done")
+
+
+map(lambda x: writenumsto(rawdata, x), prevdata)
 
 # Compare the data to the data 3 minutes prior
 # If there is no significant frequency change in
 # the light, the led junction has warmed up
+sys.stdout.write("Configuring ... ")
 while True:
     data = readnums(ser)
     writenumsto(rawdata, data)
 
-    if abs(prev3[0] - data[0]) < 100: # in Hz
+    if abs(prevdata[-configurelimit][0] - data[0]) < 100: # in Hz
         break;
 
-    prev = data
-    prev2 = prev
-    prev3 = prev2
+    prevdata.append(data)
 
-while True:
-    data = readnums(ser)
-    writenumsto(rawdata, data)
-    data[0] = getLightFromFrequency(data, initialdata)
-    writenumsto(f, data)
-    rawdata.flush()
-    f.flush()
+print("done")
+
+sys.stdout.write("Acquiring real data (C-c to end) ...")
+try:
+    while True:
+        data = readnums(ser)
+        freq = data[0];
+        data[0] = getLightFromFrequency(data, init)
+
+        writenumsto(rawdata, data)
+        writenumsto(f, data)
+        rawdata.flush()
+        f.flush()
+except KeyboardInterrupt:
+    print("Stopping ...  ")
+#finally:
+#    sys.stdout.write("Do you want a plot of the data? (requires gnuplot) [y/N]: ")
+#    resp = raw_input();
+#    if (resp == 'y' || resp == 'Y'):
+#        try:
+#            call(["gnuplot", "-e script.plg"])
+#        except:
+#            print("An error occurred")
+#    print("Terminating);

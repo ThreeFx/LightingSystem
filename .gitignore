@@ -2,5 +2,6 @@
 *.swp
 
 log*
+rawlog*
 
 *.pyc
