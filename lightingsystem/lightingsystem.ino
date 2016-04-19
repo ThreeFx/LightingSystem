@@ -53,7 +53,7 @@ void setup() {
 void loop() {
   // Wait first
   delay(3L * 1000L);
-  
+
   // get the current data
   long freq = getFrequency();
   float temp = getTemperature();
@@ -76,7 +76,7 @@ float getTemperature() {
   // 0xE3 is the temperature register
   Wire.write(0xE3);
   Wire.endTransmission();
-  
+
   Wire.requestFrom(0x40, 2);
   byte upper = Wire.read();
   byte lower = Wire.read();
