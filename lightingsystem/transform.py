@@ -1,9 +1,15 @@
 import datetime, os, serial, sys
+from subprocess import call
+
+# -- Sliding window length -- #
 
 configurelimit = 3
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 from serialcomm import *
+
+
+# -- The light calculation function, adapt to sensor sensitivity and parameters -- #
 
 def getLightFromFrequency(data, init):
     return data[0]
@@ -19,28 +25,46 @@ def getLightFromFrequency(data, init):
     actuallightoutput = lightoutput / ((-0.3 * (junctiontemp - 25) + 100) / 100)
     return actuallightoutput
 
+
+def fixpermissions(path):
+    uid = int(os.environ.get('SUDO_UID'))
+    gid = int(os.environ.get('SUDO_GID'))
+    os.chown(os.path.abspath(path), uid, gid)
+
+def fixall(cd):
+    fixpermissions('logs/log-{}.csv'.format(cd))
+    fixpermissions('rawlogs/rawlog-{}.csv'.format(cd))
+    plotfile = os.path.abspath('plots/plot-{}.csv'.format(cd))
+    if (os.path.exists(plotfile)):
+        fixpermissions(plotfile)
+
+
+def makedir(path):
+    if not os.path.exists(os.path.abspath(path)):
+        os.makedirs(os.path.abspath(path))
+        fixpermissions(path)
+
 # --------- Main begins here ----------- #
+
 
 sys.stdout.write("Beginning setup ... ")
 
-if not os.path.exists(os.path.abspath('./logs')):
-    os.makedirs(os.path.abspath('./logs'))
-
-if not os.path.exists(os.path.abspath('./rawlogs')):
-    os.makedirs(os.path.abspath('./rawlogs'))
+makedir('logs')
+makedir('rawlogs')
 
 ser = serial.Serial(
         port = '/dev/ttyACM0',\
         baudrate = 115200)
 
-currentdate = getdatefilename()
 
+currentdate = getdatefilename()
 rawdata = open('rawlogs/rawlog-{}.csv'.format(currentdate), 'w')
 f = open('logs/log-{}.csv'.format(currentdate), 'w')
 
 print("done")
-sys.stdout.write("Acquiring initial data ... ")
 
+
+sys.stdout.write("Acquiring initial data ... ")
 init = readnums(ser)
 print("done")
 
@@ -69,7 +93,7 @@ while True:
 
 print("done")
 
-sys.stdout.write("Acquiring real data (C-c to end) ...")
+sys.stdout.write("Acquiring real data (^C to end) ... .")
 try:
     while True:
         data = readnums(ser)
@@ -82,12 +106,16 @@ try:
         f.flush()
 except KeyboardInterrupt:
     print("Stopping ...  ")
-#finally:
-#    sys.stdout.write("Do you want a plot of the data? (requires gnuplot) [y/N]: ")
-#    resp = raw_input();
-#    if (resp == 'y' || resp == 'Y'):
-#        try:
-#            call(["gnuplot", "-e script.plg"])
-#        except:
-#            print("An error occurred")
-#    print("Terminating);
+finally:
+    sys.stdout.write("Do you want a plot of the data? (requires gnuplot) [y/N]: ")
+    resp = raw_input();
+    if (resp == 'y' or resp == 'Y'):
+        makedir('plots')
+        try:
+            call([ "gnuplot", "-e datafile='logs/log-{0}.csv'".format(currentdate), "script.plg", "> plots/plot-{0}.png".format(currentdate) ])
+        except:
+            print("An error occurred")
+        rawdata.close();
+        f.close();
+    fixall(currentdate);
+    print("Exiting ... ")
