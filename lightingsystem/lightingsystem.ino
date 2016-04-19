@@ -1,22 +1,37 @@
-#include "Wire.h"
-#define DEBUG
+#include <Wire.h>
+//#define DEBUG
 
-/* Digital pins */
-const int FREQ_PIN = 2;
+/* The light sensor */
+const int GND_PIN = 35;
+const int VOLT_PIN = 25;
+const int FREQ_PIN = 23;
+const int S0_PIN = 36;
+const int S1_PIN = 34;
 
 /*
  *  Temperature sensor address
- *  Device is 0x90 >> 1 == 0x48
+ *  Device is 0x40 - AdaFruit HTU21D-F
  */
-const int TEMP_ADDR = 0x90 >> 1;
+const int TEMP_ADDR = 0x40;
 
 /* The relay */
 const int RELAY_PIN = 3;
 
 void setup() {
-  // Initialise the pins
+  // Init the light sensor
+  pinMode(GND_PIN, OUTPUT);
+  pinMode(VOLT_PIN, OUTPUT);
+  pinMode(S0_PIN, OUTPUT);
+  pinMode(S1_PIN, OUTPUT);
+
   pinMode(FREQ_PIN, INPUT);
-  pinMode(RELAY_PIN, OUTPUT);
+
+  digitalWrite(GND_PIN, LOW);
+  digitalWrite(VOLT_PIN, HIGH);
+  digitalWrite(S0_PIN, HIGH);
+  digitalWrite(S1_PIN, LOW);
+
+  Wire.begin();
 
   // Init the I2C bus
   Wire.begin();
@@ -26,7 +41,7 @@ void setup() {
 
   // Determine initial values;
   long darkFreq = getFrequency();
-  int initTemp = getTemperature();
+  float initTemp = getTemperature();
 
   // write initial data
   writeData(darkFreq, initTemp);
@@ -36,13 +51,15 @@ void setup() {
 }
 
 void loop() {
+  // Wait first
+  delay(3L * 1000L);
+  
   // get the current data
   long freq = getFrequency();
-  int temp = getTemperature();
+  float temp = getTemperature();
 
   // write it and repeat
   writeData(freq, temp);
-  delay(60L * 1000L);
 }
 
 long getFrequency() {
@@ -53,29 +70,23 @@ long getFrequency() {
   return 0;
 }
 
-int getTemperature() {
-  byte* upper;
-  byte* lower;
-  readBytesFromSensor(upper, lower);
-  return ((*upper) << 8) + (*lower);
-}
-
-void readBytesFromSensor(byte* upper, byte* lower) {
-  Wire.beginTransmission(TEMP_ADDR);
-  Wire.write(0x0);
+float getTemperature() {
+  // Standard I2C
+  Wire.beginTransmission(0x40);
+  // 0xE3 is the temperature register
+  Wire.write(0xE3);
   Wire.endTransmission();
+  
+  Wire.requestFrom(0x40, 2);
+  byte upper = Wire.read();
+  byte lower = Wire.read();
+  // Magic?
+  float temp = ((uint16_t)(upper << 8) | lower) * 175.72 / 65535 - 46.85;
 
-  Wire.requestFrom(TEMP_ADDR, 2);
-  *upper = Wire.read();
-  *lower = Wire.read();
-
-#ifdef DEBUG
-  Serial.println(*upper);
-  Serial.println(*lower);
-#endif
+  return temp;
 }
 
-void writeData(long frequency, int temperature) {
+void writeData(long frequency, float temperature) {
   Serial.print(frequency);
   Serial.write(',');
   Serial.println(temperature);
