@@ -2,5 +2,7 @@
 *.swp
 
 log*
+rawlog*
+plot*
 
 *.pyc
