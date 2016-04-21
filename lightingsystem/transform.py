@@ -1,5 +1,6 @@
 import datetime, os, serial, sys, traceback
 from subprocess import call
+from time import sleep
 
 # -- Sliding window length -- #
 
@@ -66,6 +67,11 @@ sys.stdout.write("Acquiring initial data ... ")
 init = readnums(ser)
 print("done")
 
+sys.stdout.write("You have ten seconds to plug in the LED ...")
+sleep(8)
+print
+
+
 print("configurelimit is set to {}".format(configurelimit))
 sys.stdout.write("Acquiring initial reference data ... ")
 prevdata = [init]
@@ -91,10 +97,11 @@ while True:
 
 print("done")
 
-sys.stdout.write("Acquiring real data (^C to end) ... ")
+print("Acquiring real data (^C to end) ... ")
 try:
     while True:
         data = readnums(ser)
+        print("{}, {}".format(data[0], data[1]))
         freq = data[0];
         data[0] = getLightFromFrequency(data, init)
 
