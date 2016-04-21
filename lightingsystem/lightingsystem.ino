@@ -9,15 +9,19 @@ const int S0_PIN = 36;
 const int S1_PIN = 34;
 
 /*
- *  Temperature sensor address
- *  Device is 0x40 - AdaFruit HTU21D-F
- */
+    Temperature sensor address
+    Device is 0x40 - AdaFruit HTU21D-F
+*/
 const int TEMP_ADDR = 0x40;
 
 /* The relay */
-const int RELAY_PIN = 3;
+//const int RELAY_PIN = 3;
+//const int TEST_LED = 12;
 
 void setup() {
+//  pinMode(RELAY_PIN, OUTPUT);
+//  pinMode(TEST_LED, INPUT);
+  
   // Init the light sensor
   pinMode(GND_PIN, OUTPUT);
   pinMode(VOLT_PIN, OUTPUT);
@@ -30,8 +34,6 @@ void setup() {
   digitalWrite(VOLT_PIN, HIGH);
   digitalWrite(S0_PIN, HIGH);
   digitalWrite(S1_PIN, LOW);
-
-  Wire.begin();
 
   // Init the I2C bus
   Wire.begin();
@@ -46,24 +48,28 @@ void setup() {
   // write initial data
   writeData(darkFreq, initTemp);
 
+  // wait for lamp to get turned on
+  delay(10L * 1000L);
+
   // Activate the lamp, go in loop
-  digitalWrite(RELAY_PIN, HIGH);
+  //digitalWrite(RELAY_PIN, HIGH);
+  //delay(10);
+  //Serial.println(digitalRead(TEST_LED));
 }
 
 void loop() {
-  // Wait first
-  delay(3L * 1000L);
-
   // get the current data
   long freq = getFrequency();
   float temp = getTemperature();
 
   // write it and repeat
   writeData(freq, temp);
+
+  delay(30L * 1000L);
 }
 
 long getFrequency() {
-  int duration = pulseIn(FREQ_PIN, HIGH);
+  int duration = pulseIn(FREQ_PIN, HIGH, 1000000);
   if (duration != 0) {
     return 1000000L / duration;
   }
