@@ -1,4 +1,4 @@
-import datetime, os, serial, sys
+import datetime, os, serial, sys, traceback
 from subprocess import call
 
 # -- Sliding window length -- #
@@ -21,8 +21,6 @@ def getLightFromFrequency(data, init):
     frequencydiff = frequency - darkfrequency
     irradiance = frequencydiff * 100 / 100; # convert to microW/cm^2 and then to W/m^2
     lightoutput = irradiance * 1^2; # figure distance out (in m)
-    junctiontemp = 80 # figure junction temp out
-    actuallightoutput = lightoutput / ((-0.3 * (junctiontemp - 25) + 100) / 100)
     return actuallightoutput
 
 
@@ -39,7 +37,7 @@ def fixall(cd):
         fixpermissions(plotfile)
 
 
-def makedir(path):
+def makeDirIfExists(path):
     if not os.path.exists(os.path.abspath(path)):
         os.makedirs(os.path.abspath(path))
         fixpermissions(path)
@@ -49,8 +47,8 @@ def makedir(path):
 
 sys.stdout.write("Beginning setup ... ")
 
-makedir('logs')
-makedir('rawlogs')
+makeDirIfExists('logs')
+makeDirIfExists('rawlogs')
 
 ser = serial.Serial(
         port = '/dev/ttyACM0',\
@@ -93,7 +91,7 @@ while True:
 
 print("done")
 
-sys.stdout.write("Acquiring real data (^C to end) ... .")
+sys.stdout.write("Acquiring real data (^C to end) ... ")
 try:
     while True:
         data = readnums(ser)
@@ -104,18 +102,26 @@ try:
         writenumsto(f, data)
         rawdata.flush()
         f.flush()
+
 except KeyboardInterrupt:
+    print
     print("Stopping ...  ")
+
 finally:
-    sys.stdout.write("Do you want a plot of the data? (requires gnuplot) [y/N]: ")
-    resp = raw_input();
-    if (resp == 'y' or resp == 'Y'):
-        makedir('plots')
-        try:
-            call([ "gnuplot", "-e datafile='logs/log-{0}.csv'".format(currentdate), "script.plg", "> plots/plot-{0}.png".format(currentdate) ])
-        except:
-            print("An error occurred")
-        rawdata.close();
-        f.close();
+    rawdata.close();
+    f.close();
     fixall(currentdate);
+
+    #sys.stdout.write("Do you want a plot of the data? (requires gnuplot) [y/N]: ")
+    #resp = raw_input();
+
+
+    #if (resp == 'y' or resp == 'Y'):
+    #    makeDirIfExists('plots')
+    #    try:
+    #        with open('plots/plot-{}.png'.format(currentdate), 'w') as plot:
+    #                call([ "gnuplot -e \"datafile='./logs/log-{0}.csv'\" script.plg" ], stdout=plot)
+    #    except Exception, e:
+    #        print("An error occurred:")
+    #        print traceback.format_exc(e)
     print("Exiting ... ")
