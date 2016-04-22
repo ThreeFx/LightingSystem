@@ -1,10 +1,12 @@
 import datetime, os, serial, sys, traceback
 from subprocess import call
 from time import sleep
+import numpy as np
+import math
 
 # -- Sliding window length -- #
 
-configurelimit = 3
+configurelimit = 3 * 250
 sys.stdout = os.fdopen(sys.stdout.fileno(), 'w', 0)
 
 from serialcomm import *
@@ -13,16 +15,16 @@ from serialcomm import *
 # -- The light calculation function, adapt to sensor sensitivity and parameters -- #
 
 def getLightFromFrequency(data, init):
-    return data[0]
+#    return data[1]
 
-    frequency = data[0]
-    darkfrequency = initdata[0]
-    temp = data[1]
+    frequency = data[1]
+    darkfrequency = init[1]
+    temp = data[2]
 
     frequencydiff = frequency - darkfrequency
-    irradiance = frequencydiff * 100 / 100; # convert to microW/cm^2 and then to W/m^2
-    lightoutput = irradiance * 1^2; # figure distance out (in m)
-    return actuallightoutput
+    irradiance = frequencydiff * 10 / 100; # convert to microW/cm^2 and then to W/m^2
+    lightoutput = irradiance * 0.21 * 0.21; # Watt per sternradian
+    return lightoutput # watt per sterntradian
 
 
 def fixpermissions(path):
@@ -50,6 +52,7 @@ sys.stdout.write("Beginning setup ... ")
 
 makeDirIfExists('logs')
 makeDirIfExists('rawlogs')
+makeDirIfExists('avg')
 
 ser = serial.Serial(
         port = '/dev/ttyACM0',\
@@ -59,6 +62,7 @@ ser = serial.Serial(
 currentdate = getdatefilename()
 rawdata = open('rawlogs/rawlog-{}.csv'.format(currentdate), 'w')
 f = open('logs/log-{}.csv'.format(currentdate), 'w')
+avg = open('avg/avg-{}.csv'.format(currentdate), 'w')
 
 print("done")
 
@@ -90,7 +94,7 @@ while True:
     data = readnums(ser)
     writenumsto(rawdata, data)
 
-    if abs(prevdata[-configurelimit][0] - data[0]) < 100: # in Hz
+    if abs(prevdata[-configurelimit][1] - data[1]) < 100: # in Hz
         break;
 
     prevdata.append(data)
@@ -99,13 +103,24 @@ print("done")
 
 print("Acquiring real data (^C to end) ... ")
 try:
+    c = 0;
+    avgdata = [];
     while True:
         data = readnums(ser)
-        print("{}, {}".format(data[0], data[1]))
-        freq = data[0];
-        data[0] = getLightFromFrequency(data, init)
-
         writenumsto(rawdata, data)
+
+        data[1] = getLightFromFrequency(data, init)
+
+        # log the average separately
+        avgdata.append(data)
+        c = c + 1
+        if c >= 250:
+            average = [np.mean(map(lambda x: x[1], avgdata)), data[2]]
+            print("{}, {}".format(average[0], average[1]));
+            writenumsto(avg, average)
+            avgdata = []
+            c = 0
+
         writenumsto(f, data)
         rawdata.flush()
         f.flush()

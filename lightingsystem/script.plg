@@ -4,14 +4,23 @@ set datafile separator ","
 
 set output "data.png"
 
-set xlabel "Time (s)"
+set xlabel "Time (min)"
 
-set ylabel "Light output (W)"
+set ylabel "Light output (W/sr)"
 set y2label "Temperature (Celsius)"
+
+set ytics nomirror
+set y2tics
 
 set title "Light output and ambient temperature vs. time"
 
 set autoscale y
 set autoscale y2
 
-plot datafile using (column(0) * 60):1 axes x1y1, datafile using (column(0) * 60):2 axes x1y2
+f(x) = a*x + b
+
+fit f(x) datafile using (column(0)/3):1 via a, b
+
+plot datafile using (column(0)/3):1 axes x1y1 with linespoints title "output",\
+datafile using (column(0)/3):2 axes x1y2 with linespoints title "temperature",\
+f(x) axes x1y1 title "Linear fit of light output"
