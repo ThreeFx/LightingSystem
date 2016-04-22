@@ -1,7 +1,9 @@
 #include <Wire.h>
 //#define DEBUG
 
-const int samplesPerCycle = 50; // five sine waves
+unsigned long start;
+
+const int samplesPerCycle = 250; // five sine waves
 
 /* The light sensor */
 const int GND_PIN = 35;
@@ -28,8 +30,8 @@ void setup() {
 
   digitalWrite(GND_PIN, LOW);
   digitalWrite(VOLT_PIN, HIGH);
-  digitalWrite(S0_PIN, HIGH);
-  digitalWrite(S1_PIN, LOW);
+  digitalWrite(S0_PIN, LOW);
+  digitalWrite(S1_PIN, HIGH);
 
   // Init the I2C bus
   Wire.begin();
@@ -37,15 +39,20 @@ void setup() {
   // Open the data connection
   Serial.begin(115200);
 
+  // wait at startup for power to flow
+  delay(100);
+
   // Determine initial values;
   long darkFreq = getFrequency();
   float initTemp = getTemperature();
 
   // write initial data
-  writeData(darkFreq, initTemp);
+  writeData(0, darkFreq, initTemp);
 
   // wait for lamp to get turned on
   delay(10 * 1000L);
+
+  start = micros();
 }
 
 void loop() {
@@ -53,17 +60,19 @@ void loop() {
   float temp = getTemperature();
 
   long freqs[samplesPerCycle];
+  unsigned long timee[samplesPerCycle];
   // gather data (ca. samplesPerCycle / 10 sine waves)
   for (int i = 0; i < samplesPerCycle; i++) {
     freqs[i] = getFrequency();
+    timee[i] = micros() - start;
   }
 
   // write data
   for (int i = 0; i < samplesPerCycle; i++) {
-    writeData(freqs[i], temp);
+    writeData(timee[i], freqs[i], temp);
   }
 
-  //delay(60L * 1000L);
+  delay(20L * 1000L);
 }
 
 long getFrequency() {
@@ -90,7 +99,9 @@ float getTemperature() {
   return temp;
 }
 
-void writeData(long frequency, float temperature) {
+void writeData(unsigned long timeInMs, long frequency, float temperature) {
+  Serial.print(timeInMs);
+  Serial.write(',');
   Serial.print(frequency);
   Serial.write(',');
   Serial.println(temperature);
