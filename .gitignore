@@ -1,6 +1,8 @@
 *.tmp
 *.swp
+*.log
 
+avg*
 log*
 rawlog*
 plot*
