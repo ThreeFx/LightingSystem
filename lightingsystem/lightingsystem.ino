@@ -1,6 +1,8 @@
 #include <Wire.h>
 //#define DEBUG
 
+const int samplesPerCycle = 50; // five sine waves
+
 /* The light sensor */
 const int GND_PIN = 35;
 const int VOLT_PIN = 25;
@@ -14,14 +16,8 @@ const int S1_PIN = 34;
 */
 const int TEMP_ADDR = 0x40;
 
-/* The relay */
-//const int RELAY_PIN = 3;
-//const int TEST_LED = 12;
 
-void setup() {
-//  pinMode(RELAY_PIN, OUTPUT);
-//  pinMode(TEST_LED, INPUT);
-  
+void setup() {  
   // Init the light sensor
   pinMode(GND_PIN, OUTPUT);
   pinMode(VOLT_PIN, OUTPUT);
@@ -49,27 +45,29 @@ void setup() {
   writeData(darkFreq, initTemp);
 
   // wait for lamp to get turned on
-  delay(10L * 1000L);
-
-  // Activate the lamp, go in loop
-  //digitalWrite(RELAY_PIN, HIGH);
-  //delay(10);
-  //Serial.println(digitalRead(TEST_LED));
+  delay(10 * 1000L);
 }
 
 void loop() {
-  // get the current data
-  long freq = getFrequency();
+  // get the current temperature only once per cycle
   float temp = getTemperature();
 
-  // write it and repeat
-  writeData(freq, temp);
+  long freqs[samplesPerCycle];
+  // gather data (ca. samplesPerCycle / 10 sine waves)
+  for (int i = 0; i < samplesPerCycle; i++) {
+    freqs[i] = getFrequency();
+  }
 
-  delay(30L * 1000L);
+  // write data
+  for (int i = 0; i < samplesPerCycle; i++) {
+    writeData(freqs[i], temp);
+  }
+
+  //delay(60L * 1000L);
 }
 
 long getFrequency() {
-  int duration = pulseIn(FREQ_PIN, HIGH, 1000000);
+  int duration = pulseIn(FREQ_PIN, HIGH, 100000);
   if (duration != 0) {
     return 1000000L / duration;
   }
